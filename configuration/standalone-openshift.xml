@@ -26,6 +26,7 @@
         <extension module="org.jboss.as.web"/>
         <extension module="org.jboss.as.webservices"/>
         <extension module="org.jboss.as.weld"/>
+        <!-- ##KEYCLOAK_EXTENSION## -->
     </extensions>
     <management>
         <security-realms>
@@ -65,7 +66,7 @@
             <native-interface security-realm="ManagementRealm">
                 <socket-binding native="management-native"/>
             </native-interface>
-            <http-interface>
+            <http-interface console-enabled="false"><!-- ##MGMT_IFACE_REALM## -->
                 <socket-binding http="management-http"/>
             </http-interface>
         </management-interfaces>
@@ -83,16 +84,9 @@
         <subsystem xmlns="urn:jboss:domain:logging:1.5">
             <console-handler name="CONSOLE">
                 <formatter>
-                    <named-formatter name="COLOR-PATTERN"/>
+                    <named-formatter name="##CONSOLE-FORMATTER##"/>
                 </formatter>
             </console-handler>
-            <async-handler name="ASYNC">
-                <queue-length value="512"/>
-                <overflow-action value="block"/>
-                <subhandlers>
-                    <handler name="CONSOLE"/>
-                </subhandlers>
-            </async-handler>
             <logger category="com.arjuna">
                 <level name="WARN"/>
             </logger>
@@ -114,7 +108,7 @@
             <root-logger>
                 <level name="INFO"/>
                 <handlers>
-                    <handler name="ASYNC"/>
+                    <handler name="CONSOLE"/>
                 </handlers>
             </root-logger>
             <formatter name="OPENSHIFT">
@@ -125,7 +119,10 @@
                 </custom-formatter>
             </formatter>
             <formatter name="COLOR-PATTERN">
+<!--
                 <pattern-formatter pattern="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+-->
+                <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
             </formatter>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:datasources:1.2">
@@ -141,11 +138,12 @@
                     <driver name="postgresql" module="org.postgresql">
                         <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
                     </driver>
+                    <!-- ##DRIVERS## -->
                 </drivers>
             </datasources>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:deployment-scanner:1.1">
-            <deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="5000"/>
+            <deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="5000" auto-deploy-exploded="##AUTO_DEPLOY_EXPLODED##"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:ee:1.2">
             <spec-descriptor-property-replacement>false</spec-descriptor-property-replacement>
@@ -180,11 +178,7 @@
                 <cluster-passivation-store name="infinispan" cache-container="ejb"/>
             </passivation-stores>
             <async thread-pool-name="default"/>
-            <timer-service thread-pool-name="default" default-data-store="default-file-store">
-                <data-stores>
-                    <file-data-store name="default-file-store" path="timer-service-data" relative-to="jboss.server.data.dir"/>
-                </data-stores>
-            </timer-service>
+            <!-- ##TIMER_SERVICE## -->
             <remote connector-ref="remoting-connector" thread-pool-name="default"/>
             <thread-pools>
                 <thread-pool name="default">
@@ -220,7 +214,7 @@
                 </replicated-cache>
                 <!--
                   ~  Clustered cache used internally by EJB subsytem for managing the client-mapping(s) of
-                  ~                 the socketbinding referenced by the EJB remoting connector 
+                  ~                 the socketbinding referenced by the EJB remoting connector
                   -->
                 <replicated-cache name="remote-connector-client-mappings" mode="SYNC" batching="true"/>
                 <distributed-cache name="dist" mode="ASYNC" batching="true" l1-lifespan="0">
@@ -270,16 +264,16 @@
         <subsystem xmlns="urn:jboss:domain:jgroups:1.1" default-stack="tcp">
             <stack name="udp">
                 <transport type="UDP" socket-binding="jgroups-udp"/>
-                <protocol type="openshift.KUBE_PING"/>
+                <!-- ##JGROUPS_PING_PROTOCOL## -->
                 <protocol type="MERGE3"/>
                 <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
                 <protocol type="FD"/>
                 <protocol type="VERIFY_SUSPECT"/>
+                <!-- ##JGROUPS_ENCRYPT## -->
                 <protocol type="pbcast.NAKACK"/>
                 <protocol type="UNICAST2"/>
                 <protocol type="pbcast.STABLE"/>
                 <!-- ##JGROUPS_AUTH## -->
-                <!-- ##JGROUPS_ENCRYPT## -->
                 <protocol type="pbcast.GMS"/>
                 <protocol type="UFC"/>
                 <protocol type="MFC"/>
@@ -288,16 +282,16 @@
             </stack>
             <stack name="tcp">
                 <transport type="TCP" socket-binding="jgroups-tcp"/>
-                <protocol type="openshift.KUBE_PING"/>
+                <!-- ##JGROUPS_PING_PROTOCOL## -->
                 <protocol type="MERGE2"/>
                 <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
                 <protocol type="FD"/>
                 <protocol type="VERIFY_SUSPECT"/>
+                <!-- ##JGROUPS_ENCRYPT## -->
                 <protocol type="pbcast.NAKACK"/>
                 <protocol type="UNICAST2"/>
                 <protocol type="pbcast.STABLE"/>
                 <!-- ##JGROUPS_AUTH## -->
-                <!-- ##JGROUPS_ENCRYPT## -->
                 <protocol type="pbcast.GMS"/>
                 <protocol type="UFC"/>
                 <protocol type="MFC"/>
@@ -314,6 +308,8 @@
             <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jsf:1.0"/>
+        <!-- ##KEYCLOAK_SUBSYSTEM## -->
+        <!-- ##KEYCLOAK_SAML_SUBSYSTEM## -->
         <subsystem xmlns="urn:jboss:domain:mail:1.2">
             <mail-session name="default" jndi-name="java:jboss/mail/Default">
                 <smtp-server outbound-socket-binding-ref="mail-smtp"/>
@@ -355,6 +351,7 @@
                         <policy-module code="Delegating" flag="required"/>
                     </authorization>
                 </security-domain>
+                <!-- ##KEYCLOAK_SECURITY_DOMAIN## -->
                 <!-- ##ADDITIONAL_SECURITY_DOMAINS## -->
             </security-domains>
         </subsystem>
@@ -365,7 +362,7 @@
                     <uuid/>
                 </process-id>
             </core-environment>
-            <recovery-environment socket-binding="txn-recovery-environment" status-socket-binding="txn-status-manager"/>
+            <recovery-environment socket-binding="txn-recovery-environment" status-socket-binding="txn-status-manager" recovery-listener="true"/>
             <coordinator-environment default-timeout="300"/>
             <!-- ##JDBC_STORE## -->
         </subsystem>
@@ -373,6 +370,11 @@
             <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http"/>
             <!-- ##HTTPS## -->
             <virtual-server name="default-host" enable-welcome-root="false"/>
+            <valve name="remoteIp" module="org.jboss.as.web" class-name="org.apache.catalina.valves.RemoteIpValve">
+                <param param-name="remoteIpHeader" param-value="X-Forwarded-For" />
+                <param param-name="protocolHeader" param-value="X-Forwarded-Proto" />
+            </valve>
+            <!-- ##ACCESS_LOG_VALVE## -->
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:1.2">
             <modify-wsdl-address>true</modify-wsdl-address>
@@ -395,29 +397,25 @@
             <nic name="eth0"/>
         </interface>
         <!-- TODO - only show this if the jacorb subsystem is added  -->
-        <interface name="unsecure">
-            <!--
-              ~  Used for IIOP sockets in the standard configuration.
-              ~                  To secure JacORB you need to setup SSL 
-              -->
-            <inet-address value="${jboss.bind.address.unsecure:127.0.0.1}"/>
+        <interface name="bindall">
+            <inet-address value="0.0.0.0"/>
         </interface>
     </interfaces>
-    <socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
+    <socket-binding-group name="standard-sockets" default-interface="public" port-offset="0">
         <socket-binding name="management-native" interface="management" port="${jboss.management.native.port:9999}"/>
         <socket-binding name="management-http" interface="management" port="${jboss.management.http.port:9990}"/>
         <socket-binding name="management-https" interface="management" port="${jboss.management.https.port:9443}"/>
-        <socket-binding name="http" port="8080"/>
-        <socket-binding name="https" port="8443"/>
+        <socket-binding name="http" interface="bindall" port="8080"/>
+        <socket-binding name="https" interface="bindall" port="8443"/>
         <socket-binding name="jgroups-mping" port="0" multicast-address="${jboss.default.multicast.address:230.0.0.4}" multicast-port="45700"/>
         <socket-binding name="jgroups-tcp" port="7600"/>
         <socket-binding name="jgroups-tcp-fd" port="57600"/>
         <socket-binding name="jgroups-udp" port="55200" multicast-address="${jboss.default.multicast.address:230.0.0.4}" multicast-port="45688"/>
         <socket-binding name="jgroups-udp-fd" port="54200"/>
         <!-- ##MESSAGING_PORTS## -->
-        <socket-binding name="remoting" port="4447"/>
-        <socket-binding name="txn-recovery-environment" port="4712"/>
-        <socket-binding name="txn-status-manager" port="4713"/>
+        <socket-binding name="remoting" interface="bindall" port="4447"/>
+        <socket-binding name="txn-recovery-environment" interface="bindall" port="4712"/>
+        <socket-binding name="txn-status-manager" interface="bindall" port="4713"/>
         <outbound-socket-binding name="mail-smtp">
             <remote-destination host="localhost" port="25"/>
         </outbound-socket-binding>
